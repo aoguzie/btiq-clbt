@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#667eea">
+    <title>Bet iQ</title>
+    <link rel="stylesheet" href="core.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-logo">⚽</div>
+            <h2>Bet iQ</h2>
+            <div class="loading-progress">
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill"></div>
+                </div>
+                <div id="progressText" class="progress-text">0%</div>
+            </div>
+            <p class="loading-subtitle">Loading Predictions...</p>
+        </div>
+    </div>
+
+    <!-- Error Screen -->
+    <div id="errorScreen" class="error-screen">
+        <div class="pull-refresh-indicator" id="pullIndicator">↓</div>
+        <div class="error-content">
+            <div class="error-icon">⚠️</div>
+            <h2 class="error-title">Connection Error</h2>
+            <p class="error-message" id="errorMessage">Unable to load data. Please check your internet connection.</p>
+            <p class="pull-refresh-hint">Pull down to refresh</p>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="main-app hidden">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="app-title">
+                    <img class="headicon" src="icon.jpeg" alt="">
+                    
+                    <!-- <h1>Bet iQ</h1> -->
+                </div>
+                <div class="filters-grid">
+                    
+                    <div class="filter-item">
+                        <label>1X2</label>
+                        <input type="number" id="matchPercentage" placeholder="0" min="0" max="100">
+                    </div>
+                    <div class="filter-item">
+                        <label>BTTS</label>
+                        <input type="number" id="bttsPercentage" placeholder="0" min="0" max="100">
+                    </div>
+                    <div class="filter-item">
+                        <label>O/U</label>
+                        <input type="number" id="ovunPercentage" placeholder="0" min="0" max="100">
+                    </div>
+                    <div class="filter-item">
+                        <label>AH</label>
+                        <input type="number" id="ahdpPercentage" placeholder="0" min="0" max="100">
+                    </div>
+                </div>
+                <nav class="day-tabs" id="dayTabs"></nav>
+            </div>
+        </header>
+
+        
+        
+        <main class="main-content">
+            <div id="matchesContainer" class="matches-container"></div>
+        </main>
+    </div>
+    <script src="moment.min.js"></script>
+    <script src="utils.js"></script>
+    <script src="lodash.min.js"></script>
+    <script src="core.js"></script>
+</html>
