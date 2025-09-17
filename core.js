@@ -571,7 +571,14 @@ for (const item of res) {
             // Create date tabs
             var dayTabsContainer = document.getElementById('dayTabs');
             
-            // Remove Past tab. Add only day tabs.
+            // Add Live tab first
+            var liveTab = document.createElement('div');
+            liveTab.classList.add('tab');
+            liveTab.dataset.day = 'live';
+            liveTab.textContent = '🔴 Live';
+            dayTabsContainer.appendChild(liveTab);
+            
+            // Add day tabs
             for (let i = 0; i < 7; i++) {
                 var tab = document.createElement('div');
                 tab.classList.add('tab');
@@ -580,6 +587,57 @@ for (const item of res) {
                 var date = moment().add(i, 'days');
                 tab.textContent = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : date.format('MMM DD');
                 dayTabsContainer.appendChild(tab);
+            }
+            
+            function showLiveMatches() {
+                var matchesContainer = document.getElementById('matchesContainer');
+                matchesContainer.innerHTML = '<div class="no-matches">🔄 Loading live matches...</div>';
+                
+                function updateLiveDisplay() {
+                    const matches = Array.from(liveMatches.values());
+                    if (matches.length > 0) {
+                        matchesContainer.innerHTML = matches.map(createLiveCard).join('');
+                    } else {
+                        matchesContainer.innerHTML = '<div class="no-matches"><span style="font-size: 100px;">⚽</span><br><span style="font-size: 30px;">No Live Matches Available</span><br><span style="font-size: 16px; color: #999;">Check back later for live games</span></div>';
+                    }
+                }
+                
+                updateLiveDisplay();
+                setInterval(updateLiveDisplay, 2000);
+            }
+            
+            function createLiveCard(match) {
+                return createCard(
+                    match.league || 'Live Match',
+                    `🔴 LIVE | ${match.country || 'Unknown'} | ${match.time || ''}`,
+                    `
+                        <div class="match-header-info">
+                            <div class="team-names">
+                                <span class="team1">
+                                    <span class="team1-name">${match.team1}</span>
+                                </span>
+                                <span class="vs">vs</span>
+                                <span class="team2">
+                                    <span class="team2-name">${match.team2}</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="odds-grid">
+                            <div class="outcome-box home">
+                                <div class="outcome-label">Home</div>
+                                <div class="probability">${formatProbability(match.prob1)}</div>
+                            </div>
+                            <div class="outcome-box draw">
+                                <div class="outcome-label">Draw</div>
+                                <div class="probability">${formatProbability(match.probx || 0)}</div>
+                            </div>
+                            <div class="outcome-box away">
+                                <div class="outcome-label">Away</div>
+                                <div class="probability">${formatProbability(match.prob2 || 0)}</div>
+                            </div>
+                        </div>
+                    `
+                );
             }
             
             function showPastMatches() {
@@ -606,8 +664,12 @@ for (const item of res) {
                 tab.addEventListener('click', function() {
                     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                     this.classList.add('active');
-                    currentDay = parseInt(this.dataset.day);
-                    filterMatchesByDay(currentDay);
+                    if (this.dataset.day === 'live') {
+                        showLiveMatches();
+                    } else {
+                        currentDay = parseInt(this.dataset.day);
+                        filterMatchesByDay(currentDay);
+                    }
                 });
             });
 
@@ -662,6 +724,12 @@ for (const item of res) {
                 input.addEventListener("input", () => filterMatchesByDay(currentDay));
             });
   
+            // Initialize live matches
+            if (typeof initLiveMatches === 'function') {
+                initLiveMatches();
+                console.log('Live matches initialized');
+            }
+            
             // Call the function to populate the cards initially
             filterMatchesByDay(0);
             

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live </title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .prediction-card { background: white; border-radius: 12px; margin: 15px 0; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .match-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .teams-name { font-weight: bold; font-size: 16px; }
+        .confidence-badge { background: #007bff; color: white; padding: 4px 8px; border-radius: 6px; font-size: 12px; }
+        .match-header-info { margin-bottom: 15px; }
+        .team-names { display: flex; align-items: center; gap: 10px; }
+        .team1, .team2 { display: flex; align-items: center; gap: 5px; }
+        .team-logo { width: 24px; height: 24px; border-radius: 50%; }
+        .vs { font-weight: bold; color: #666; }
+        .odds-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 15px 0; }
+        .outcome-box { text-align: center; padding: 10px; border-radius: 8px; background: #f8f9fa; }
+        .outcome-label { font-size: 12px; color: #666; margin-bottom: 5px; }
+        .odds-value { font-weight: bold; font-size: 16px; }
+        .probability { font-size: 14px; margin-top: 5px; }
+        .probability-green { color: #28a745; font-weight: bold; }
+        .probability-yellow { color: #ffc107; font-weight: bold; }
+        .probability-red { color: #dc3545; font-weight: bold; }
+        .live-indicator { color: #dc3545; font-weight: bold; animation: blink 1s infinite; }
+        .blink-dot { color: #dc3545; animation: blink 1s infinite; }
+        @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0.3; } }
+        .match-time { color: #666; font-size: 14px; }
+        .match-score { font-weight: bold; font-size: 18px; color: #007bff; }
+        .no-matches { text-align: center; padding: 40px; color: #666; }
+        .market-info { margin: 10px 0; padding: 8px; background: #f0f8ff; border-radius: 6px; font-size: 14px; }
+        .tables-row { display: flex; gap: 15px; margin: 15px 0; }
+        .table-col { flex: 1; }
+        .table-col h4 { margin: 0 0 10px 0; font-size: 14px; color: #333; }
+        .market-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .market-table th, .market-table td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #eee; }
+        .market-table th { background: #f8f9fa; font-weight: bold; }
+        .market-table tr:hover { background: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <h1> \u{1F534} Live </h1>
+    <div id="liveMatches">Connecting to live matches...</div>
+    
+    <script src="live-api.js"></script>
+    <script>
+        function formatProbability(probability) {
+            if (probability === 0) {
+                return `<span class="probability-red">Blocked</span>`;
+            } else if (probability >= 0.66) {
+                return `<span class="probability-green">${(probability * 100).toFixed(1)}%</span>`;
+            } else if (probability >= 0.55) {
+                return `<span class="probability-yellow">${(probability * 100).toFixed(1)}%</span>`;
+            } else {
+                return `<span class="probability-red">${(probability * 100).toFixed(1)}%</span>`;
+            }
+        }
+        
+        function createLiveCard(match) {
+            return `
+                <div class="prediction-card" data-match-id="${match.id}">
+                    <div class="match-header">
+                        <div class="teams-name">${match.league || 'xx'}</div>
+                        <div class="confidence-badge">
+                            <span class="">${match.country || 'xx'} | \u{1F534} LIVE</span>
+                        </div>
+                    </div>
+                    <div class="match-header-info">
+                        <div class="team-names">
+                            <span class="team1">
+                                <span class="team1-name">${match.team1 || 'xx'}</span>
+                            </span>
+                            <span class="vs">vs</span>
+                            <span class="team2">
+                                <span class="team2-name">${match.team2 || 'xx'}</span>
+                            </span>
+                        </div>
+                        <div class="match-score">${match.score || 'xx'}</div>
+                        <div class="match-time">${match.time || 'xx'}<span class="blink-dot"> \u{2022}</span></div>
+                    </div>
+                    <div class="odds-grid">
+                        <div class="outcome-box home">
+                            <div class="outcome-label">Home Win ${match.trend1 || ''}</div>
+                            <div class="">${formatProbability(match.prob1)}</div>
+                        </div>
+                        <div class="outcome-box draw">
+                            <div class="outcome-label">Draw ${match.trendx || ''}</div>
+                            <div class="">${formatProbability(match.probx)}</div>
+                        </div>
+                        <div class="outcome-box away">
+                            <div class="outcome-label">Away Win ${match.trend2 || ''}</div>
+                            <div class="">${formatProbability(match.prob2)}</div>
+                        </div>
+                    </div>
+                    ${match.bestOU ? `<div class="market-info"><strong>Best O/U:</strong> ${match.bestOU.outcome || 'xx'} ${match.bestOU.threshold || 'xx'} - ${formatProbability(match.bestOU.probability || 0)}</div>` : ''}
+                    ${match.bestHDP ? `<div class="market-info"><strong>Best Handicap:</strong> ${match.bestHDP.outcome || 'xx'} ${(match.bestHDP.handicap || 0) > 0 ? '+' : ''}${match.bestHDP.handicap || 'xx'} - ${formatProbability(match.bestHDP.probability || 0)}</div>` : ''}
+                    <div class="tables-row">
+                        ${match.topOU.length > 0 ? `
+                            <div class="table-col">
+                                <h4>\u{1F4CA} TOP O/U</h4>
+                                <table class="market-table">
+                                    <thead><tr><th>Total</th><th>Prob</th></tr></thead>
+                                    <tbody>
+                                        ${match.topOU.map(ou => `<tr><td>${ou.outcome || 'xx'} ${ou.threshold || 'xx'}</td><td>${formatProbability(ou.probability || 0)}</td></tr>`).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ` : ''}
+                        ${match.topHDP.length > 0 ? `
+                            <div class="table-col">
+                                <h4>\u{2696}\u{FE0F} TOP HANDICAP</h4>
+                                <table class="market-table">
+                                    <thead><tr><th>Handicap</th><th>Prob</th></tr></thead>
+                                    <tbody>
+                                        ${match.topHDP.map(hdp => `<tr><td>${hdp.outcome || 'xx'} ${(hdp.handicap || 0) > 0 ? '+' : ''}${hdp.handicap || 'xx'}</td><td>${formatProbability(hdp.probability || 0)}</td></tr>`).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function testLiveAPI() {
+            const container = document.getElementById('liveMatches');
+            
+            console.log('Starting live matches...');
+            initLiveMatches();
+            console.log('Live matches initialized, Map size:', liveMatches.size);
+            
+            setInterval(() => {
+                const matches = Array.from(liveMatches.values());
+                console.log('Displaying matches:', matches);
+                
+                if (matches.length > 0) {
+                    container.innerHTML = matches.map(createLiveCard).join('');
+                } else {
+                    container.innerHTML = '<div class="no-matches"><span style="font-size: 100px;">\u{26BD}</span><br><span style="font-size: 20px;">No Live Matches</span></div>';
+                }
+            }, 1000);
+        }
+        
+        testLiveAPI();
+    </script>
+</body>
+</html>
